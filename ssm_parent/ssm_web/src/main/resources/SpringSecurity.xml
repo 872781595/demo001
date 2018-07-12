@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:security="http://www.springframework.org/schema/security"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans          
+    http://www.springframework.org/schema/beans/spring-beans.xsd          
+    http://www.springframework.org/schema/security          
+    http://www.springframework.org/schema/security/spring-security.xsd">
+
+	<security:http security="none" pattern="/login.jsp"></security:http>
+	<security:http security="none" pattern="/error.jsp"></security:http>
+	<security:http security="none" pattern="/css/**" ></security:http>
+	<security:http security="none" pattern="/img/**" ></security:http>
+	<security:http security="none" pattern="/pages/**" ></security:http>
+	<security:http security="none" pattern="/plugins/**" ></security:http>
+
+	<!-- 针对请求做配置 auto-config 表示使用框架提供的默认配置 use-expressions 使用spel表达式 hasRole('ROLE_USER') -->
+	<security:http auto-config="true" use-expressions="true">
+		<!-- 配置拦截的请求路径 请求的用户必须拥有ROLE_USER的角色才可以访问 -->
+		<security:intercept-url pattern="/**" access="hasAnyRole('ROLE_ADMIN','ROLE_USER')" />
+		<!-- 配置自定义的登陆信息 login-page 指定自定义的登陆页面 login-processing-url 登陆请求的url路径 default-target-url 
+			默认登陆成功页面 authentication-failure-url 登陆失败的显示页面 -->
+		<security:form-login login-page="/login.jsp"
+							 login-processing-url="/login" 
+					 		 default-target-url="/index.jsp"
+							 authentication-failure-url="/error.jsp" />
+		<!-- csrf跨域攻击拦截指定不可用 -->
+		<security:csrf disabled="true" />
+		<!-- 成功登陆权限不足的处理 -->
+		<security:access-denied-handler
+			error-page="/403.jsp" />
+		<security:logout invalidate-session="true" logout-success-url="/login.jsp" logout-url="/logout" />
+	</security:http>
+
+	<!-- 认证和权限的管理配置 -->
+	<security:authentication-manager>
+		<!-- 认证权力的提供支持者 -->
+		<security:authentication-provider user-service-ref="sysUserService" >
+			<!-- <security:user-service>
+				<security:user name="admin" password="{noop}admin"
+					authorities="ROLE_ADMIN" />
+				<security:user name="user" password="{noop}user"
+					authorities="ROLE_USER" />
+			</security:user-service> -->
+			<!-- 配置加密方式 -->
+			<security:password-encoder hash="bcrypt" ></security:password-encoder>
+		</security:authentication-provider>
+	</security:authentication-manager>
+	
+	<!-- 将密码配置util工具类添加到spring中,可以在service中使用自动注入直接使用 -->
+	<bean id="passWordEncoder" class="org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder" ></bean>
+</beans>
